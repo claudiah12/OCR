@@ -3,21 +3,23 @@
 # Contributors: Kyla (main), Edrienne
 
 import os
+import sys
 import numpy as np
 import cv2
 import contour_helper as help
 np.set_printoptions(threshold=np.inf)
 
 # Constants
-MIN_CONTOUR_AREA = 1000
-RESIZED_IMAGE_WIDTH = 20
-RESIZED_IMAGE_HEIGHT = 30
+MIN_CONTOUR_AREA = 50
+RESIZED_IMAGE_WIDTH = 40
+RESIZED_IMAGE_HEIGHT = 60
 
-TRAINING_CLASSIFICATION_FILENAME = 'training_classification_labels.txt'
-TESTING_CLASSIFICATION_FILENAME = 'testing_classification_labels.txt'
-TRAINING_DATA_FILENAME = 'training_data.txt'
-TESTING_DATA_FILENAME = 'testing_data.txt'
-TRAIN_DATA_DIR = "English/Hnd/Img/Sample0"
+training_classification_filename = 'training_classification_labels'
+testing_classification_filename = 'testing_classification_labels'
+training_data_filename = 'training_data'
+testing_data_filename = 'testing_data'
+HAND_DATA_DIR = "English/Hnd/Img/Sample0"
+FONT_DATA_DIR = "English/Fnt/Sample0"
 
 # Flags
 showImages = False # whether to cv2.imshow() the results
@@ -54,7 +56,7 @@ def extractFeatures(trainingImageName, destinationFile):
 			if help.detectTittles(contours[i], contours[i+1]):
 				lettersWithTittles.append(contours[i])
 				tittles.append(contours[i+1])
-	charX, charY = trainingImg.shape[1::-1];
+	charX, charY = trainingImg.shape[1::-1]
 	charW = 0
 	charH = 0
 	# add appropriate contours to training data
@@ -66,24 +68,13 @@ def extractFeatures(trainingImageName, destinationFile):
 				charY = min(charY, intY)
 				charW = max(charW, intW)
 				charH = max(charH, intH)
-
-				# if checkForTittles and help.getIndexOfTittle(contour, lettersWithTittles) > -1:
-				# 	index = help.getIndexOfTittle(contour, lettersWithTittles)
-				# 	if index > -1:
-				# 		# get dimensions of tittle and use to draw rect and grab letter
-				# 		[tX, tY,tWidth, tHeight] = cv2.boundingRect(tittles[index])
-				# 		additionalHeight = intY - (tY + tHeight)
-
-				# 		cv2.rectangle(trainingImg,(intX, tY),(intX + intW, tY + intH + tHeight + additionalHeight),(255, 0, 0),1)
-				# 		contourImg = threshImg[intY:intY + intH + tHeight + additionalHeight, intX:intX + intW]
-				# else:
-				# 	# draw rect and grab letter
+			
 	cv2.rectangle(trainingImg, (charX, charY), (charX + charW, charY + charH), (255, 0, 255), 1)
 	contourImg = threshImg[charY:charY + charH, charX:charX + charW]
-	
+
 	# resize image and show on original
 	contourImgResized = cv2.resize(contourImg, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
-	
+
 	if showImages:
 		print trainingImageName
 		cv2.imshow(trainingImageName + " thresholded", threshImg)
@@ -92,49 +83,89 @@ def extractFeatures(trainingImageName, destinationFile):
 
 	# flatten contour to 1D and append to training data
 	contourImgFlatten = contourImgResized.reshape((1,RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+	
 	trainingdata = np.append(trainingdata, contourImgFlatten,0)
-
 	# show order that contours are classified
 	if showImages and showContourOrder:
 		cv2.imshow(trainingImageName, trainingImg)
 		cv2.waitKey(0)
-	np.savetxt(trainingDataFile, trainingdata)
+	np.savetxt(trainingDataFile, trainingdata.astype(int), fmt='%i')
 	trainingDataFile.close()
 	# remove windows from memory
 	cv2.destroyAllWindows() 
 
-	if(destinationFile == TRAINING_DATA_FILENAME):
-		return len(trainingdata)
-	return 0
+	return
+
+def processImages(directoryPath, character_class, trainNum, trainingClassificationArray, testingClassificationArray):
+	for idx, file in enumerate(os.listdir(os.path.expanduser(directoryPath))):
+		classificationArray = trainingClassificationArray
+		destinationFile = training_data_filename
+		if (idx > 508):
+			return
+		if (idx > trainNum):
+			classificationArray = testingClassificationArray
+			destinationFile = testing_data_filename
+
+		filePath = os.path.join(directoryPath, file)
+		classificationArray.append(character_class)
+		extractFeatures(filePath, destinationFile)
 
 
 def main():
 	""" Classifies training data images with uppercase and number labels """
+	global training_data_filename
+	global testing_data_filename
+	global training_classification_filename
+	global testing_classification_filename
 
-	open(TRAINING_CLASSIFICATION_FILENAME, 'w').close()
-	open(TESTING_CLASSIFICATION_FILENAME, 'w').close()
-	open(TRAINING_DATA_FILENAME, 'w').close()
-	open(TESTING_DATA_FILENAME, 'w').close()
+	sampleRange = range(1, 63)
+
+	if (sys.argv[1] == "d"):
+		training_data_filename += "_digit"
+		testing_data_filename += "_digit"
+		training_classification_filename += "_digit"
+		testing_classification_filename += "_digit"
+		sampleRange = range(1, 11)
+	elif (sys.argv[1] == "u"):
+		training_data_filename += "_uppercase"
+		testing_data_filename += "_uppercase"
+		training_classification_filename += "_uppercase"
+		testing_classification_filename += "_uppercase"
+		sampleRange = range(11, 37)
+	elif (sys.argv[1] == "l"):
+		training_data_filename += "_lowercase"
+		testing_data_filename += "_lowercase"
+		training_classification_filename += "_lowercase"
+		testing_classification_filename += "_lowercase"
+		sampleRange = range(37, 63)
+	elif (sys.argv[1] == "a"):
+		training_data_filename += "_alphabet"
+		testing_data_filename += "_alphabet"
+		training_classification_filename += "_alphabet"
+		testing_classification_filename += "_alphabet"
+		sampleRange = range(11, 63)
+
+	training_data_filename += ".txt"
+	testing_data_filename += ".txt"
+	training_classification_filename += ".txt"
+	testing_classification_filename += ".txt"
+
+	open(training_classification_filename, 'w').close()
+	open(testing_classification_filename, 'w').close()
+	open(training_data_filename, 'w').close()
+	open(testing_data_filename, 'w').close()
 
 	trainingClassificationArray = []
 	testingClassificationArray = []
-	count = 0
 
-	trainingImg = cv2.imread("English/Hnd/Img/Sample005/img005-041.png")
-
-	for i in range(1, 10):
+	for i in sampleRange:
 		character_class = str(i).zfill(2)
-		directoryPath = os.path.expanduser(TRAIN_DATA_DIR + character_class)
-		for idx, file in enumerate(os.listdir(os.path.expanduser(directoryPath))):
-			classificationArray = trainingClassificationArray
-			destinationFile = TRAINING_DATA_FILENAME
-			if (idx > 40):
-				classificationArray = testingClassificationArray
-				destinationFile = TESTING_DATA_FILENAME
 
-			filePath = os.path.join(directoryPath, file)
-			classificationArray.append(character_class)
-			count += extractFeatures(filePath, destinationFile)
+		handDirectory = os.path.expanduser(HAND_DATA_DIR + character_class)
+		processImages(handDirectory, character_class, 40, trainingClassificationArray, testingClassificationArray)
+		
+		fontDirectory = os.path.expanduser(FONT_DATA_DIR + character_class)
+		processImages(fontDirectory, character_class, 381, trainingClassificationArray, testingClassificationArray)
 		print i
 	
 	floatClassificationsTrain = np.array(trainingClassificationArray, np.float32)
@@ -144,8 +175,8 @@ def main():
 	flatClassificationsTrain = floatClassificationsTrain.reshape((floatClassificationsTrain.size, 1))
 	flatClassificationsTest = floatClassificationsTest.reshape((floatClassificationsTest.size, 1))
 
-	classificationFileTrain = open(TRAINING_CLASSIFICATION_FILENAME, 'a')
-	classificationFileTest = open(TESTING_CLASSIFICATION_FILENAME, 'a')
+	classificationFileTrain = open(training_classification_filename, 'a')
+	classificationFileTest = open(testing_classification_filename, 'a')
 
 	np.savetxt(classificationFileTrain, flatClassificationsTrain)
 	np.savetxt(classificationFileTest, flatClassificationsTest)
