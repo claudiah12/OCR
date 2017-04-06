@@ -100,7 +100,7 @@ def processImages(directoryPath, character_class, trainNum, trainingClassificati
 	for idx, file in enumerate(os.listdir(os.path.expanduser(directoryPath))):
 		classificationArray = trainingClassificationArray
 		destinationFile = training_data_filename
-		if (idx > 508):
+		if (idx > 500):
 			return
 		if (idx > trainNum):
 			classificationArray = testingClassificationArray
@@ -145,6 +145,28 @@ def main():
 		testing_classification_filename += "_alphabet"
 		sampleRange = range(11, 63)
 
+	if (sys.argv[2] == "h-h"):
+		training_data_filename += "_h-h"
+		testing_data_filename += "_h-h"
+		training_classification_filename += "_h-h"
+		testing_classification_filename += "_h-h"
+	elif (sys.argv[2] == "f-f"):
+		training_data_filename += "_f-f"
+		testing_data_filename += "_f-f"
+		training_classification_filename += "_f-f"
+		testing_classification_filename += "_f-f"
+	elif (sys.argv[2] == "fh-h"):
+		training_data_filename += "_fh-h"
+		testing_data_filename += "_fh-h"
+		training_classification_filename += "_fh-h"
+		testing_classification_filename += "_fh-h"
+	elif (sys.argv[2] == "f-h"):
+		training_data_filename += "_f-h"
+		testing_data_filename += "_f-h"
+		training_classification_filename += "_f-h"
+		testing_classification_filename += "_f-h"
+	
+
 	training_data_filename += ".txt"
 	testing_data_filename += ".txt"
 	training_classification_filename += ".txt"
@@ -161,11 +183,23 @@ def main():
 	for i in sampleRange:
 		character_class = str(i).zfill(2)
 
-		handDirectory = os.path.expanduser(HAND_DATA_DIR + character_class)
-		processImages(handDirectory, character_class, 40, trainingClassificationArray, testingClassificationArray)
+		if (sys.argv[2] == "h-h"):
+			handDirectory = os.path.expanduser(HAND_DATA_DIR + character_class)
+			processImages(handDirectory, character_class, 40, trainingClassificationArray, testingClassificationArray)
+		elif (sys.argv[2] == "f-f"):
+			fontDirectory = os.path.expanduser(FONT_DATA_DIR + character_class)
+			processImages(fontDirectory, character_class, 381, trainingClassificationArray, testingClassificationArray)
+		elif (sys.argv[2] == "fh-h"):
+			handDirectory = os.path.expanduser(HAND_DATA_DIR + character_class)
+			processImages(handDirectory, character_class, 40, trainingClassificationArray, testingClassificationArray)
+			fontDirectory = os.path.expanduser(FONT_DATA_DIR + character_class)
+			processImages(fontDirectory, character_class, 500, trainingClassificationArray, testingClassificationArray)
+		elif (sys.argv[2] == "f-h"):
+			handDirectory = os.path.expanduser(HAND_DATA_DIR + character_class)
+			processImages(handDirectory, character_class, 0, trainingClassificationArray, testingClassificationArray)
+			fontDirectory = os.path.expanduser(FONT_DATA_DIR + character_class)
+			processImages(fontDirectory, character_class, 500, trainingClassificationArray, testingClassificationArray)
 		
-		fontDirectory = os.path.expanduser(FONT_DATA_DIR + character_class)
-		processImages(fontDirectory, character_class, 381, trainingClassificationArray, testingClassificationArray)
 		print i
 	
 	floatClassificationsTrain = np.array(trainingClassificationArray, np.float32)

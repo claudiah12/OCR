@@ -23,19 +23,20 @@ def __getTrainedKNearest(training_filename, training_classification_filename):
 	Runs K-Nearest Neighbors classification using classification and training data
 	:return: kNearest object
 	"""
+	print training_filename
+
 	try:
 		classificationLabels = np.loadtxt(training_classification_filename, np.float32)
 	except:
 		print("Can't find classification labels")
-	
+
 	try:
 		trainingData = np.loadtxt(training_filename, np.float32)
 	except:
 		print("Can't find training data")
 
 	classificationLabels = classificationLabels.reshape((classificationLabels.size, 1))  # reshape to 1D for train()
-	print "class", classificationLabels.shape
-	print "train", trainingData.shape
+
 	# create KNearest and train
 	kNearest = cv2.KNearest()
 	kNearest.train(trainingData, classificationLabels)
@@ -82,6 +83,27 @@ def main():
 		testing_classification_filename += "_alphabet"
 		sampleRange = range(11, 63)
 
+	if (sys.argv[2] == "h-h"):
+		training_data_filename += "_h-h"
+		testing_data_filename += "_h-h"
+		training_classification_filename += "_h-h"
+		testing_classification_filename += "_h-h"
+	elif (sys.argv[2] == "f-f"):
+		training_data_filename += "_f-f"
+		testing_data_filename += "_f-f"
+		training_classification_filename += "_f-f"
+		testing_classification_filename += "_f-f"
+	elif (sys.argv[2] == "fh-h"):
+		training_data_filename += "_fh-h"
+		testing_data_filename += "_fh-h"
+		training_classification_filename += "_fh-h"
+		testing_classification_filename += "_fh-h"
+	elif (sys.argv[2] == "f-h"):
+		training_data_filename += "_f-h"
+		testing_data_filename += "_f-h"
+		training_classification_filename += "_f-h"
+		testing_classification_filename += "_f-h"
+
 	training_data_filename += ".txt"
 	testing_data_filename += ".txt"
 	training_classification_filename += ".txt"
@@ -92,6 +114,8 @@ def main():
 	testing_data = np.float32(testing_data)
 
 	kNearest = __getTrainedKNearest(training_data_filename, training_classification_filename)
+	print "Training complete"
+
 	ret, result, neighbors, dist = kNearest.find_nearest(testing_data, 5)
 	correct = 0
 	for idx, r in enumerate(result):
